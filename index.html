@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; img-src 'self' data:;">
+  <title>SSH客户端</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css">
+  <script>
+    // 确保 window.xtermJS 在使用前已定义
+    window.xtermJS = window.xtermJS || {};
+  </script>
+</head>
+<body>
+  <!-- 使用原生构建的简易UI，避免Vue相关错误 -->
+  <div id="app">
+    <div class="layout">
+      <!-- 侧边栏 -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h3>连接管理</h3>
+          <button id="toggle-sidebar" class="toggle-btn">«</button>
+        </div>
+        
+        <div class="connection-list" id="connection-list">
+          <!-- 连接列表将由JavaScript动态填充 -->
+        </div>
+        
+        <div class="sidebar-footer">
+          <button id="add-connection-btn" class="sidebar-btn add-btn">
+            <span class="icon">+</span> 添加连接
+          </button>
+          <button id="settings-btn" class="sidebar-btn settings-btn">
+            <span class="icon">⚙</span> 设置
+          </button>
+        </div>
+      </div>
+      
+      <!-- 主界面区域 -->
+      <div class="main-content">
+        <!-- 标签页 -->
+        <div class="tabs" id="tabs-container">
+          <!-- 标签页将由JavaScript动态填充 -->
+        </div>
+        
+        <!-- 终端容器 -->
+        <div class="terminals-container" id="terminals-container">
+          <!-- 终端将由JavaScript动态填充 -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- 连接表单模态框 -->
+    <div class="modal" id="connection-modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close" id="close-modal">&times;</span>
+        <h2 id="modal-title">新建连接</h2>
+        
+        <div class="form-group">
+          <label for="name">名称</label>
+          <input type="text" id="name" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="host">主机</label>
+          <input type="text" id="host" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="port">端口</label>
+          <input type="number" id="port" value="22" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="username">用户名</label>
+          <input type="text" id="username" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="authType">认证类型</label>
+          <select id="authType">
+            <option value="password">密码</option>
+            <option value="privateKey">私钥</option>
+          </select>
+        </div>
+        
+        <div class="form-group" id="password-group">
+          <label for="password">密码</label>
+          <input type="password" id="password">
+        </div>
+        
+        <div class="form-group" id="privatekey-group" style="display: none;">
+          <label for="privateKey">私钥路径</label>
+          <input type="text" id="privateKey">
+          
+          <label for="passphrase">密码短语 (可选)</label>
+          <input type="password" id="passphrase">
+        </div>
+        
+        <div class="form-buttons">
+          <button type="button" id="save-connection" class="save-btn">保存</button>
+          <button type="button" id="cancel-connection" class="cancel-btn">取消</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 上下文菜单 -->
+    <div class="context-menu" id="context-menu" style="display: none; position: fixed; z-index: 1001;">
+      <div class="menu-item" id="edit-connection">编辑</div>
+      <div class="menu-item" id="duplicate-connection">复制</div>
+      <div class="menu-item delete" id="delete-connection">删除</div>
+    </div>
+  </div>
+  
+  <!-- 引入标准脚本 -->
+  <script>
+    // 当DOM加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+      // 获取DOM元素
+      const addConnectionBtn = document.getElementById('add-connection-btn');
+      const connectionModal = document.getElementById('connection-modal');
+      const closeModal = document.getElementById('close-modal');
+      const saveConnection = document.getElementById('save-connection');
+      const cancelConnection = document.getElementById('cancel-connection');
+      const authTypeSelect = document.getElementById('authType');
+      const passwordGroup = document.getElementById('password-group');
+      const privatekeyGroup = document.getElementById('privatekey-group');
+      const connectionList = document.getElementById('connection-list');
+      const tabsContainer = document.getElementById('tabs-container');
+      const terminalsContainer = document.getElementById('terminals-container');
+      const contextMenu = document.getElementById('context-menu');
+      const editConnection = document.getElementById('edit-connection');
+      const duplicateConnection = document.getElementById('duplicate-connection');
+      const deleteConnection = document.getElementById('delete-connection');
+      const toggleSidebar = document.getElementById('toggle-sidebar');
+      
+      let connections = [];
+      let activeTab = -1;
+      let terminals = [];
+      let sshClients = [];
+      let currentConnectionForContext = null;
+      let isEditing = false;
+      let editingConnection = null;
+      
+      // 切换认证类型显示
+      authTypeSelect.addEventListener('change', function() {
+        if (this.value === 'password') {
+          passwordGroup.style.display = 'block';
+          privatekeyGroup.style.display = 'none';
+        } else {
+          passwordGroup.style.display = 'none';
+          privatekeyGroup.style.display = 'block';
+        }
+      });
+      
+      // 显示连接模态框
+      addConnectionBtn.addEventListener('click', function() {
+        // 重置表单
+        document.getElementById('name').value = '';
+        document.getElementById('host').value = '';
+        document.getElementById('port').value = '22';
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('privateKey').value = '';
+        document.getElementById('passphrase').value = '';
+        authTypeSelect.value = 'password';
+        passwordGroup.style.display = 'block';
+        privatekeyGroup.style.display = 'none';
+        
+        // 设置为新建模式
+        isEditing = false;
+        editingConnection = null;
+        document.getElementById('modal-title').textContent = '新建连接';
+        
+        // 显示模态框
+        connectionModal.style.display = 'flex';
+      });
+      
+      // 关闭模态框
+      closeModal.addEventListener('click', function() {
+        connectionModal.style.display = 'none';
+      });
+      cancelConnection.addEventListener('click', function() {
+        connectionModal.style.display = 'none';
+      });
+      
+      // 保存连接
+      saveConnection.addEventListener('click', function() {
+        // 获取表单数据
+        const name = document.getElementById('name').value;
+        const host = document.getElementById('host').value;
+        const port = parseInt(document.getElementById('port').value, 10);
+        const username = document.getElementById('username').value;
+        const authType = authTypeSelect.value;
+        const password = document.getElementById('password').value;
+        const privateKey = document.getElementById('privateKey').value;
+        const passphrase = document.getElementById('passphrase').value;
+        
+        // 验证必填字段
+        if (!name || !host || !port || !username || 
+            (authType === 'password' && !password) || 
+            (authType === 'privateKey' && !privateKey)) {
+          alert('请填写所有必填字段');
+          return;
+        }
+        
+        // 创建连接对象
+        const connection = {
+          name,
+          host,
+          port,
+          username,
+          authType,
+          password: authType === 'password' ? password : '',
+          privateKey: authType === 'privateKey' ? privateKey : '',
+          passphrase: authType === 'privateKey' ? passphrase : ''
+        };
+        
+        // 保存到本地存储
+        if (window.electron) {
+          window.electron.saveConnection(connection);
+        } else {
+          // 模拟保存行为（当electron API不可用时）
+          if (isEditing && editingConnection) {
+            const index = connections.findIndex(c => c.name === editingConnection.name);
+            if (index >= 0) {
+              connections[index] = connection;
+            }
+          } else {
+            connections.push(connection);
+          }
+          renderConnectionList();
+        }
+        
+        // 关闭模态框
+        connectionModal.style.display = 'none';
+      });
+      
+      // 切换侧边栏
+      toggleSidebar.addEventListener('click', function() {
+        const sidebar = document.querySelector('.sidebar');
+        sidebar.classList.toggle('collapsed');
+        this.textContent = sidebar.classList.contains('collapsed') ? '»' : '«';
+      });
+      
+      // 点击body时隐藏上下文菜单
+      document.body.addEventListener('click', function() {
+        contextMenu.style.display = 'none';
+      });
+      
+      // 加载连接列表
+      function loadConnections() {
+        if (window.electron) {
+          window.electron.getConnections();
+          window.electron.on('connections-loaded', function(loadedConnections) {
+            connections = loadedConnections;
+            renderConnectionList();
+          });
+        }
+      }
+      
+      // 渲染连接列表
+      function renderConnectionList() {
+        connectionList.innerHTML = '';
+        connections.forEach(function(conn) {
+          const item = document.createElement('div');
+          item.className = 'connection-item';
+          item.textContent = `${conn.name} (${conn.host})`;
+          
+          // 点击连接到服务器
+          item.addEventListener('click', function() {
+            connectToServer(conn);
+          });
+          
+          // 右键显示上下文菜单
+          item.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+            showContextMenu(event, conn);
+          });
+          
+          connectionList.appendChild(item);
+        });
+      }
+      
+      // 显示上下文菜单
+      function showContextMenu(event, conn) {
+        contextMenu.style.top = `${event.clientY}px`;
+        contextMenu.style.left = `${event.clientX}px`;
+        contextMenu.style.display = 'block';
+        currentConnectionForContext = conn;
+        
+        // 阻止冒泡，避免立即隐藏菜单
+        event.stopPropagation();
+      }
+      
+      // 编辑连接
+      editConnection.addEventListener('click', function() {
+        if (!currentConnectionForContext) return;
+        
+        // 填充表单
+        document.getElementById('name').value = currentConnectionForContext.name;
+        document.getElementById('host').value = currentConnectionForContext.host;
+        document.getElementById('port').value = currentConnectionForContext.port;
+        document.getElementById('username').value = currentConnectionForContext.username;
+        document.getElementById('authType').value = currentConnectionForContext.authType;
+        document.getElementById('password').value = currentConnectionForContext.password || '';
+        document.getElementById('privateKey').value = currentConnectionForContext.privateKey || '';
+        document.getElementById('passphrase').value = currentConnectionForContext.passphrase || '';
+        
+        // 显示/隐藏认证字段
+        if (currentConnectionForContext.authType === 'password') {
+          passwordGroup.style.display = 'block';
+          privatekeyGroup.style.display = 'none';
+        } else {
+          passwordGroup.style.display = 'none';
+          privatekeyGroup.style.display = 'block';
+        }
+        
+        // 设置为编辑模式
+        isEditing = true;
+        editingConnection = currentConnectionForContext;
+        document.getElementById('modal-title').textContent = '编辑连接';
+        
+        // 显示模态框
+        connectionModal.style.display = 'flex';
+        contextMenu.style.display = 'none';
+      });
+      
+      // 复制连接
+      duplicateConnection.addEventListener('click', function() {
+        if (!currentConnectionForContext) return;
+        
+        const duplicate = {...currentConnectionForContext};
+        duplicate.name = `${duplicate.name} (复制)`;
+        
+        if (window.electron) {
+          window.electron.saveConnection(duplicate);
+        } else {
+          connections.push(duplicate);
+          renderConnectionList();
+        }
+        
+        contextMenu.style.display = 'none';
+      });
+      
+      // 删除连接
+      deleteConnection.addEventListener('click', function() {
+        if (!currentConnectionForContext) return;
+        
+        if (confirm(`确定要删除连接 "${currentConnectionForContext.name}" 吗？`)) {
+          if (window.electron) {
+            window.electron.deleteConnection(currentConnectionForContext.name);
+          } else {
+            connections = connections.filter(c => c.name !== currentConnectionForContext.name);
+            renderConnectionList();
+          }
+        }
+        
+        contextMenu.style.display = 'none';
+      });
+      
+      // 连接到服务器
+      function connectToServer(connection) {
+        // 创建新标签页
+        const tabIndex = addTab(connection.name);
+        
+        // 切换到新标签页
+        switchTab(tabIndex);
+        
+        // 创建终端
+        setTimeout(function() {
+          createTerminal(tabIndex, connection);
+        }, 100);
+      }
+      
+      // 添加标签页
+      function addTab(name) {
+        const tabIndex = tabsContainer.children.length;
+        
+        const tab = document.createElement('div');
+        tab.className = 'tab';
+        tab.dataset.index = tabIndex;
+        
+        const tabName = document.createElement('span');
+        tabName.textContent = name;
+        tab.appendChild(tabName);
+        
+        const closeButton = document.createElement('span');
+        closeButton.className = 'close-tab';
+        closeButton.textContent = '×';
+        closeButton.addEventListener('click', function(event) {
+          event.stopPropagation();
+          closeTab(tabIndex);
+        });
+        tab.appendChild(closeButton);
+        
+        tab.addEventListener('click', function() {
+          switchTab(parseInt(this.dataset.index, 10));
+        });
+        
+        tabsContainer.appendChild(tab);
+        
+        // 创建终端容器
+        const terminalWrapper = document.createElement('div');
+        terminalWrapper.className = 'terminal-wrapper';
+        terminalWrapper.style.display = 'none';
+        
+        const terminalElement = document.createElement('div');
+        terminalElement.id = `terminal-${tabIndex}`;
+        terminalElement.className = 'terminal';
+        
+        terminalWrapper.appendChild(terminalElement);
+        terminalsContainer.appendChild(terminalWrapper);
+        
+        return tabIndex;
+      }
+      
+      // 切换标签页
+      function switchTab(index) {
+        // 更新活动标签
+        activeTab = index;
+        
+        // 更新标签样式
+        const tabs = tabsContainer.children;
+        for (let i = 0; i < tabs.length; i++) {
+          if (i === index) {
+            tabs[i].classList.add('active');
+          } else {
+            tabs[i].classList.remove('active');
+          }
+        }
+        
+        // 更新终端显示
+        const terminalWrappers = terminalsContainer.children;
+        for (let i = 0; i < terminalWrappers.length; i++) {
+          if (i === index) {
+            terminalWrappers[i].style.display = 'block';
+          } else {
+            terminalWrappers[i].style.display = 'none';
+          }
+        }
+        
+        // 调整终端大小
+        if (terminals[index] && terminals[index].fitAddon) {
+          setTimeout(function() {
+            try {
+              terminals[index].fitAddon.fit();
+            } catch (e) {
+              console.error('调整终端大小失败:', e);
+            }
+          }, 0);
+        }
+      }
+      
+      // 关闭标签页
+      function closeTab(index) {
+        // 关闭SSH连接
+        if (sshClients[index]) {
+          try {
+            if (sshClients[index].dispose) {
+              sshClients[index].dispose();
+            }
+          } catch (e) {
+            console.error('关闭SSH连接失败:', e);
+          }
+        }
+        
+        // 销毁终端
+        if (terminals[index] && terminals[index].term) {
+          try {
+            terminals[index].term.dispose();
+          } catch (e) {
+            console.error('销毁终端失败:', e);
+          }
+        }
+        
+        // 删除DOM元素
+        tabsContainer.removeChild(tabsContainer.children[index]);
+        terminalsContainer.removeChild(terminalsContainer.children[index]);
+        
+        // 更新索引
+        for (let i = index + 1; i < tabsContainer.children.length + 1; i++) {
+          if (tabsContainer.children[i - 1]) {
+            tabsContainer.children[i - 1].dataset.index = i - 1;
+          }
+        }
+        
+        // 更新数组
+        terminals.splice(index, 1);
+        sshClients.splice(index, 1);
+        
+        // 更新活动标签页
+        if (activeTab === index) {
+          if (index > 0) {
+            switchTab(index - 1);
+          } else if (tabsContainer.children.length > 0) {
+            switchTab(0);
+          } else {
+            activeTab = -1;
+          }
+        } else if (activeTab > index) {
+          switchTab(activeTab - 1);
+        }
+      }
+      
+      // 创建终端
+      async function createTerminal(index, connection) {
+        try {
+          console.log('开始创建终端...');
+          
+          // 检查模块是否可用
+          if (!window.xtermJS || !window.xtermJS.createTerminalElement) {
+            console.error('xtermJS 对象不存在或不完整');
+            throw new Error('终端组件未加载');
+          }
+          
+          console.log('xtermJS version:', window.xtermJS.version);
+          
+          // 终端元素 ID
+          const terminalElementId = `terminal-${index}`;
+          
+          // 创建终端实例（单步完成所有操作）
+          const term = window.xtermJS.createTerminalElement(terminalElementId, {
+            cursorBlink: true,
+            fontSize: 14,
+            fontFamily: 'Menlo, Monaco, Courier New, monospace',
+            theme: {
+              background: '#1e1e1e',
+              foreground: '#f0f0f0'
+            },
+            scrollback: 1000,
+            allowProposedApi: true
+          });
+          
+          console.log('终端创建成功:', term.id);
+          
+          // 调整终端大小
+          try {
+            console.log('调整终端大小...');
+            term.fit();
+            
+            // 监听容器大小变化
+            const terminalElement = document.getElementById(terminalElementId);
+            const resizeObserver = new ResizeObserver(() => {
+              try {
+                term.fit();
+              } catch (e) {
+                console.error('自动调整终端大小失败:', e);
+              }
+            });
+            
+            resizeObserver.observe(terminalElement);
+          } catch (e) {
+            console.error('初始调整终端大小失败:', e);
+          }
+          
+          // 保存终端实例
+          terminals[index] = { term };
+          
+          // 显示连接信息
+          term.write(`正在连接到 ${connection.host}:${connection.port}...\r\n`);
+          
+          try {
+            // 连接到SSH服务器
+            const result = await window.electron.connectSSH(connection);
+            console.log('SSH连接结果:', result);
+            
+            // 设置终端输入事件
+            term.onData(function(data) {
+              window.electron.sendSSHData(result.id, data);
+            });
+            
+            // 监听SSH数据
+            window.electron.onSSHData(result.id, (data) => {
+              term.write(data);
+            });
+            
+            // 保存SSH客户端ID
+            sshClients[index] = {
+              id: result.id,
+              dispose: async function() {
+                try {
+                  await window.electron.disconnectSSH(result.id);
+                  console.log('已断开连接');
+                } catch (e) {
+                  console.error('断开连接失败:', e);
+                }
+              }
+            };
+            
+          } catch (error) {
+            console.error('SSH连接失败:', error);
+            term.write(`\r\n\x1b[31m连接失败: ${error.message}\x1b[0m\r\n`);
+          }
+          
+        } catch (error) {
+          console.error('创建终端时出错:', error);
+          alert(`创建终端失败: ${error.message}`);
+        }
+      }
+      
+      // 调整窗口大小时重新调整终端
+      window.addEventListener('resize', function() {
+        if (activeTab >= 0 && terminals[activeTab] && terminals[activeTab].fitAddon) {
+          try {
+            terminals[activeTab].fitAddon.fit();
+          } catch (e) {
+            console.error('调整终端大小失败:', e);
+          }
+        }
+      });
+      
+      // 初始化
+      loadConnections();
+    });
+  </script>
+</body>
+</html>
