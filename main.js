@@ -5,6 +5,11 @@ const Store = require('electron-store');
 const { createAppMenu } = require('./src/menu');
 const { NodeSSH } = require('node-ssh');
 
+const customRootPath = path.join(__dirname, 'data');
+app.setPath('userData', customRootPath);
+
+console.log('userData path:', app.getPath('userData'));
+
 const store = new Store();
 const sshConnections = new Map();
 

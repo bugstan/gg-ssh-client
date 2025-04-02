@@ -6,6 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; img-src 'self' data:;">
   <title>SSH客户端</title>
   <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/fix-buttons.css">
   <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css">
   <script>
     // 确保 window.xtermJS 在使用前已定义
@@ -28,11 +29,11 @@
         </div>
         
         <div class="sidebar-footer">
-          <button id="add-connection-btn" class="sidebar-btn add-btn">
-            <span class="icon">+</span> 添加连接
+          <button id="add-connection-btn" class="sidebar-btn add-btn" type="button">
+            <span class="icon">+</span><span class="btn-text">添加连接</span>
           </button>
           <button id="settings-btn" class="sidebar-btn settings-btn">
-            <span class="icon">⚙</span> 设置
+            <span class="icon">⚙</span> <span class="btn-text">设置</span>
           </button>
         </div>
       </div>
@@ -266,7 +267,50 @@
         connections.forEach(function(conn) {
           const item = document.createElement('div');
           item.className = 'connection-item';
-          item.textContent = `${conn.name} (${conn.host})`;
+          
+          // 添加连接图标
+          const icon = document.createElement('span');
+          icon.className = 'icon';
+          icon.textContent = '🖥️';
+          icon.style.marginRight = '8px';
+          item.appendChild(icon);
+          
+          // 添加连接名称文本
+          const text = document.createElement('span');
+          text.className = 'connection-name';
+          text.textContent = `${conn.name} (${conn.host})`;
+          item.appendChild(text);
+          
+          // 添加操作按钮容器
+          const actions = document.createElement('div');
+          actions.className = 'connection-actions';
+          
+          // 添加编辑图标
+          const editIcon = document.createElement('span');
+          editIcon.className = 'action-icon edit-icon';
+          editIcon.textContent = '✏️';
+          editIcon.title = '编辑连接';
+          editIcon.addEventListener('click', function(event) {
+            event.stopPropagation(); // 阻止冒泡，避免触发连接操作
+            editConnectionHandler(conn);
+          });
+          actions.appendChild(editIcon);
+          
+          // 添加连接图标
+          const connectIcon = document.createElement('span');
+          connectIcon.className = 'action-icon connect-icon';
+          connectIcon.textContent = '▶️';
+          connectIcon.title = '连接到服务器';
+          connectIcon.addEventListener('click', function(event) {
+            event.stopPropagation(); // 阻止冒泡
+            connectToServer(conn);
+          });
+          actions.appendChild(connectIcon);
+          
+          item.appendChild(actions);
+          
+          // 设置工具提示，在收起时显示连接名称
+          item.title = `${conn.name} (${conn.host})`;
           
           // 点击连接到服务器
           item.addEventListener('click', function() {
@@ -281,6 +325,36 @@
           
           connectionList.appendChild(item);
         });
+      }
+      
+      // 处理编辑连接
+      function editConnectionHandler(conn) {
+        // 填充表单
+        document.getElementById('name').value = conn.name;
+        document.getElementById('host').value = conn.host;
+        document.getElementById('port').value = conn.port;
+        document.getElementById('username').value = conn.username;
+        document.getElementById('authType').value = conn.authType;
+        document.getElementById('password').value = conn.password || '';
+        document.getElementById('privateKey').value = conn.privateKey || '';
+        document.getElementById('passphrase').value = conn.passphrase || '';
+        
+        // 显示/隐藏认证字段
+        if (conn.authType === 'password') {
+          passwordGroup.style.display = 'block';
+          privatekeyGroup.style.display = 'none';
+        } else {
+          passwordGroup.style.display = 'none';
+          privatekeyGroup.style.display = 'block';
+        }
+        
+        // 设置为编辑模式
+        isEditing = true;
+        editingConnection = conn;
+        document.getElementById('modal-title').textContent = '编辑连接';
+        
+        // 显示模态框
+        connectionModal.style.display = 'flex';
       }
       
       // 显示上下文菜单

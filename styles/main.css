@@ -27,13 +27,43 @@ body, html {
   height: 100%;
   background-color: #252526;
   color: #e0e0e0;
-  transition: width 0.3s;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .sidebar.collapsed {
   width: 40px;
+}
+
+.sidebar.collapsed .sidebar-header h3,
+.sidebar.collapsed .connection-item span:not(.icon),
+.sidebar.collapsed .sidebar-btn .btn-text {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-footer {
+  padding: 5px;
+}
+
+.sidebar.collapsed .sidebar-btn {
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border-radius: 50%;
+  justify-content: center;
+  margin: 5px auto;
+}
+
+.sidebar.collapsed .connection-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
 }
 
 .sidebar-header {
@@ -67,6 +97,56 @@ body, html {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.connection-item .icon {
+  font-size: 16px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 20px;
+}
+
+.connection-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.connection-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.connection-item:hover .connection-actions {
+  opacity: 1;
+}
+
+.action-icon {
+  cursor: pointer;
+  font-size: 14px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.action-icon:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 在收起状态下隐藏操作图标 */
+.sidebar.collapsed .connection-actions {
+  display: none;
 }
 
 .connection-item:hover {
@@ -95,8 +175,12 @@ body, html {
   border-radius: 3px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 5px;
+}
+
+.sidebar-btn .btn-text {
+  flex: 1;
 }
 
 .add-btn {
@@ -140,6 +224,21 @@ body, html {
   display: flex;
   background-color: #252526;
   border-bottom: 1px solid #333;
+  overflow-x: auto; /* 允许标签横向滚动 */
+  scrollbar-width: thin;
+}
+
+.tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 4px;
+}
+
+.tabs::-webkit-scrollbar-track {
+  background-color: #252526;
 }
 
 .tab {
@@ -149,11 +248,14 @@ body, html {
   display: flex;
   align-items: center;
   border-right: 1px solid #333;
+  background-color: #333333; /* 默认标签页的灰色背景 */
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
 .tab.active {
-  background-color: #1e1e1e;
-  border-bottom: 2px solid #0e639c;
+  background-color: #2c7d4c; /* 当前标签页的绿色背景 */
+  border-bottom: 2px solid #40c070; /* 绿色底部边框 */
+  color: #ffffff;
 }
 
 .close-tab {
@@ -165,10 +267,12 @@ body, html {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s;
 }
 
 .close-tab:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* 终端区域 */
@@ -285,4 +389,20 @@ body, html {
 
 .menu-item.delete:hover {
   background-color: #5a1d1d;
+}
+
+/* 去掉加号按钮上方的扩充/箭头图标 */
+button[role="toolbar"] {
+  display: none !important;
+}
+
+/* 如果上面的选择器不起作用，可以尝试更特定的选择器 */
+.add-btn::before,
+.sidebar-footer button:first-child::before {
+  display: none !important;
+}
+
+/* 隐藏可能的导航控件 */
+.navigation-controls {
+  display: none !important;
 }
