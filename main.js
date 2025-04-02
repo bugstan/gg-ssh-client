@@ -5,6 +5,9 @@ const Store = require('electron-store');
 const { createAppMenu } = require('./src/menu');
 const { NodeSSH } = require('node-ssh');
 
+// 允许从 require('electron').remote 加载
+app.allowRendererProcessReuse = false;
+
 const customRootPath = path.join(__dirname, 'data');
 app.setPath('userData', customRootPath);
 
@@ -38,11 +41,11 @@ function createWindow() {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
+      nodeIntegration: false,        // 禁用 Node 集成
+      contextIsolation: true,        // 启用上下文隔离
       preload: path.join(__dirname, 'preload.js'),
-      sandbox: false, // 禁用沙箱以允许在预加载脚本中使用Node API
-      enableRemoteModule: false,
+      sandbox: false,                // 禁用沙箱以允许在预加载脚本中使用Node API
+      enableRemoteModule: true,      // 启用远程模块
       webSecurity: true,
       allowRunningInsecureContent: false
     },

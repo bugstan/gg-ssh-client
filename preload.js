@@ -60,6 +60,9 @@ contextBridge.exposeInMainWorld('xtermJS', {
   }
 });
 
+// 暴露Node.js的require函数给渲染进程（注意：这会降低安全性，仅用于开发）
+contextBridge.exposeInMainWorld('nodeRequire', require);
+
 // 暴露安全的API给渲染进程
 contextBridge.exposeInMainWorld('electron', {
   // 连接管理
