@@ -1,0 +1,264 @@
+/* 侧边栏样式 */
+.sidebar {
+  width: 250px;
+  height: 100%;
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+/* 侧边栏收起状态 */
+.sidebar.collapsed {
+  width: 40px;
+}
+
+/* 收起侧边栏时隐藏文本，仅显示图标 */
+.sidebar.collapsed .sidebar-header h3,
+.sidebar.collapsed .connection-item span:not(.icon),
+.sidebar.collapsed .sidebar-btn .btn-text {
+  display: none;
+}
+
+/* 收起时隐藏底部按钮区域 */
+.sidebar.collapsed .sidebar-footer {
+  display: none !important;
+}
+
+/* 收起时隐藏按钮，但保留标题区域的收缩按钮 */
+.sidebar.collapsed .sidebar-btn {
+  display: none;
+}
+
+/* 修改收起时的侧边栏标头布局，使展开按钮居中 */
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+/* 收起时隐藏连接列表 */
+.sidebar.collapsed .connection-list {
+  display: none !important;
+}
+
+/* 侧边栏标头 */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #ecf0f1;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+/* 连接列表 */
+.connection-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+/* 连接项 */
+.connection-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 5px;
+  user-select: none;
+}
+
+.connection-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.connection-info {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  flex: 1;
+}
+
+.connection-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.connection-item .icon {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+/* 连接操作按钮 */
+.connection-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.connection-item:hover .connection-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  color: #ecf0f1;
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.edit-btn {
+  color: #f1c40f;
+}
+
+.connect-btn {
+  color: #2ecc71;
+}
+
+/* 侧边栏底部 */
+.sidebar-footer {
+  padding: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 侧边栏按钮 */
+.sidebar-btn {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ecf0f1;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.sidebar-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-btn .btn-text {
+  margin-left: 8px;
+}
+
+.sidebar-btn .icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-btn {
+  background-color: #0e639c;
+}
+
+.settings-btn {
+  background-color: #555;
+}
+
+.add-btn:hover {
+  background-color: #1177bb;
+}
+
+.settings-btn:hover {
+  background-color: #666;
+}
+
+/* 去掉加号按钮上方的扩充/箭头图标 */
+button[role="toolbar"] {
+  display: none !important;
+}
+
+/* 如果上面的选择器不起作用，可以尝试更特定的选择器 */
+.add-btn::before,
+.sidebar-footer button:first-child::before {
+  display: none !important;
+}
+
+/* 隐藏可能的导航控件 */
+.navigation-controls {
+  display: none !important;
+}
+
+/* 连接项正在连接时的样式 */
+.connection-item.connecting {
+  background-color: var(--accent-color);
+  color: #fff;
+  pointer-events: none; /* 防止用户交互 */
+  animation: pulse 1.5s infinite;
+  position: relative;
+}
+
+/* 连接项正在连接时的脉动动画 */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 连接项正在连接时的图标动画 */
+.connection-item.connecting .icon {
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

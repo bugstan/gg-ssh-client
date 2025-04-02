@@ -1,0 +1,55 @@
+/* 标签样式 */
+.tabs {
+  display: flex;
+  background-color: #252526;
+  border-bottom: 1px solid #333;
+  overflow-x: auto; /* 允许标签横向滚动 */
+  scrollbar-width: thin;
+}
+
+.tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 4px;
+}
+
+.tabs::-webkit-scrollbar-track {
+  background-color: #252526;
+}
+
+.tab {
+  padding: 8px 15px;
+  color: #e0e0e0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #333;
+  background-color: #333333; /* 默认标签页的灰色背景 */
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.tab.active {
+  background-color: #2c7d4c; /* 当前标签页的绿色背景 */
+  border-bottom: 2px solid #40c070; /* 绿色底部边框 */
+  color: #ffffff;
+}
+
+.close-tab {
+  margin-left: 8px;
+  font-size: 14px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s;
+}
+
+.close-tab:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+} 

@@ -1,0 +1,344 @@
+/*
+ * SSH客户端 - 主样式文件
+ * 这个文件引入所有的子样式文件
+ */
+
+/* 基础样式 */
+@import 'base.css';
+
+/* 侧边栏样式 */
+@import 'sidebar.css';
+
+/* 标签页样式 */
+@import 'tabs.css';
+
+/* 终端样式 */
+@import 'terminal.css';
+
+/* 模态框样式 */
+@import 'modal.css';
+
+/* 设置样式 */
+@import 'settings.css';
+
+/* 上下文菜单样式 */
+.context-menu {
+  background-color: #34495e;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  min-width: 150px;
+  padding: 5px 0;
+  color: #ecf0f1;
+  font-size: 14px;
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.menu-item {
+  padding: 8px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+.menu-item:hover {
+  background-color: #3498db;
+}
+
+.menu-item::before {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.menu-item#edit-connection::before {
+  content: "✏️";
+}
+
+.menu-item#duplicate-connection::before {
+  content: "🔄";
+}
+
+.menu-item#delete-connection::before {
+  content: "🗑️";
+}
+
+.menu-item.delete {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e74c3c;
+}
+
+.menu-item.delete:hover {
+  background-color: #c0392b;
+  color: #fff;
+}
+
+/* 连接列表项 */
+.connection-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+}
+
+.connection-item:hover {
+  background-color: var(--item-hover-bg);
+}
+
+/* 连接左侧区域（图标和名称） */
+.connection-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 连接项中的电脑图标 (左侧) */
+.connection-computer-icon {
+  margin-right: 10px;
+  color: var(--icon-color);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* 连接名称 */
+.connection-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: left;
+}
+
+/* 连接项中的箭头图标 (右侧) */
+.connection-arrow-icon {
+  color: var(--accent-color);
+  margin-left: 8px;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+}
+
+/* 当鼠标悬停在箭头图标上时的效果 */
+.connection-arrow-icon:hover {
+  transform: translateX(2px);
+  color: var(--text-primary);
+}
+
+/* 当鼠标悬停在连接项上时的箭头图标效果 */
+.connection-item:hover .connection-arrow-icon {
+  color: var(--text-primary);
+}
+
+/* 连接列表项 - 错误状态 */
+.connection-item.error-item {
+  color: var(--danger-color);
+  padding: 15px;
+  text-align: center;
+  font-style: italic;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* 连接列表项 - 空状态 */
+.connection-item.empty-item {
+  color: var(--text-secondary);
+  padding: 15px;
+  text-align: center;
+  font-style: italic;
+  border-bottom: 1px solid var(--border-color);
+}
+
+:root {
+  /* 颜色变量 */
+  --main-bg-color: #282c34;
+  --sidebar-bg-color: #21252b;
+  --active-tab-bg: #323842;
+  --inactive-tab-bg: #282c34;
+  --border-color: #181a1f;
+  --text-primary: #abb2bf;
+  --text-secondary: #9da5b4;
+  --accent-color: #61afef;
+  --item-hover-bg: #2c313a;
+  --danger-color: #e06c75;
+  --icon-color: #98c379;
+  
+  /* 尺寸变量 */
+  --sidebar-width: 250px;
+  --sidebar-collapsed-width: 50px;
+  --header-height: 40px;
+}
+
+/* 暗色主题 - 默认 */
+body[data-theme="dark"] {
+  --main-bg-color: #282c34;
+  --sidebar-bg-color: #21252b;
+  --active-tab-bg: #323842;
+  --inactive-tab-bg: #282c34;
+  --border-color: #181a1f;
+  --text-primary: #abb2bf;
+  --text-secondary: #9da5b4;
+  --accent-color: #61afef;
+  --item-hover-bg: #2c313a;
+  --danger-color: #e06c75;
+  --icon-color: #98c379;
+}
+
+/* 亮色主题 */
+body[data-theme="light"] {
+  --main-bg-color: #f5f5f5;
+  --sidebar-bg-color: #e0e0e0;
+  --active-tab-bg: #ffffff;
+  --inactive-tab-bg: #f0f0f0;
+  --border-color: #d0d0d0;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --accent-color: #2979ff;
+  --item-hover-bg: #eeeeee;
+  --danger-color: #f44336;
+  --icon-color: #4caf50;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--main-bg-color);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* 默认应用暗色主题 */
+body:not([data-theme]) {
+  data-theme: "dark";
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 侧边栏 */
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100%;
+  background-color: var(--sidebar-bg-color);
+  border-right: 1px solid var(--border-color);
+  transition: width 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+  height: var(--header-height);
+}
+
+.sidebar-header h3 {
+  font-size: 14px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar.collapsed .sidebar-header h3 {
+  display: none;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 5px;
+}
+
+.toggle-btn:hover {
+  color: var(--accent-color);
+}
+
+.connection-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar.collapsed .connection-list {
+  overflow-y: hidden;
+}
+
+.sidebar-footer {
+  padding: 10px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar.collapsed .sidebar-footer {
+  padding: 10px 0;
+  align-items: center;
+}
+
+.sidebar-btn {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: none;
+  background-color: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-btn:hover {
+  background-color: var(--item-hover-bg);
+}
+
+.sidebar-btn .icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.sidebar.collapsed .sidebar-btn {
+  padding: 8px;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-btn .btn-text {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-btn .icon {
+  margin-right: 0;
+} 
